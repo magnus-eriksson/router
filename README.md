@@ -7,7 +7,7 @@ A one-file router with groups, prefix and before/after filters.
 ## Install
 
 Clone this repository or use composer to download the library with the following command:
-```
+```cli
 composer require maer/router dev-master
 ```
 _Change `dev-master` to the last tagged release._
@@ -15,7 +15,7 @@ _Change `dev-master` to the last tagged release._
 
 ## Simple example
 
-```
+```php
 // Load composers autoloader
 include '/path/to/vendor/autoload.php';
 
@@ -47,14 +47,13 @@ $r->add(['GET', 'POST', ...], function() {});
 $response = $r->dispatch();
 
 echo $response;
-
 ```
 
 ## Route parameters
 
 There are some placeholders you can use for route parameters. All parameters will be passed along to the controller in the same order as they are defined in the route:
 
-```
+```php
 // Match any alpha [a-z] character
 $r->get('/something/(:alpha)', function($param) {
 
@@ -91,7 +90,7 @@ $r->get('/something/(:alpha)/(:any)/(:alphanum)?', function($param, $param2, $pa
 
 Route callbacks can be defined in different ways:
 
-```
+```php
 // Anonymous function
 $r->get('/', function() {
     // Something
@@ -113,7 +112,7 @@ _If you send in a class method (non static), the router will instantiate the cla
 
 There are `before` and `after` filters:
 
-```
+```php
 // Defining filters
 $r->filter('myfilter', function() {
     // Do some magic stuff.
@@ -146,7 +145,7 @@ The before filter will receive all route parameter, just like the route callback
 
 Add a name to any route
 
-```
+```php
 // Name a route
 $r->get('/something', function() {
 
@@ -172,7 +171,7 @@ If you don't pass enough arguments to cover all required parameters, an exceptio
 
 Instead of adding the same filters over and over for many routes, it's easier to group them together.
 
-```
+```php
 $r->group(['before' => 'a_before_filter'], function($r) {
 
     $r->get('/', function() {
@@ -192,7 +191,7 @@ When defining a group, you can add `before` and `after` filters, just like you d
 
 To add the same prefix to a group, use the `prefix` argument.
 
-```
+```php
 $r->group(['prefix' => '/admin'], function() {
 
     // This matches: /admin
@@ -214,13 +213,13 @@ You can mix `before`, `after` and `prefix` when creating groups.
 
 To dispatch the router, it's usually enough to just call the `$r->dispatch()`-method. How ever, if you want to dispatch the router with some specific URL and method you can pass them to the dispatcher (this is useful if you're writing tests):
 
-```
+```php
 $response = $r->dispatch('GET', '/some/url');
 ```
 
 If you rather trigger all the callbacks (filters and route callbacks) yourself, if you, for example, are using an IoC container, call the `$r->getMatch()` method instead and you will get the matched route object back.
 
-```
+```php
 $r->get('/', function() {
 
 }, ['before' => 'beforefilter', 'after' => 'afterfilter', 'name' => 'somename']);
@@ -240,7 +239,7 @@ $route = $this->getMatch('GET', '/');
 
 If the before and after filters are closures, you can trigger them via:
 
-```
+```php
 $response = $r->executeCallback('beforefilter');
 ```
 
