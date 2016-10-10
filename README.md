@@ -99,7 +99,7 @@ $r->get('/', function() {
 // Class method
 $r->get('/', ['Namespace\Classname', 'methodName']);
 // or
-$r-get('/', 'Namespace\Classname@methodName');
+$r->get('/', 'Namespace\Classname@methodName');
 
 // Static class method
 $r->get('/', 'Namespace\Classname::methodName');
@@ -123,12 +123,12 @@ $r->filter('anotherfilter', function() {
 });
 
 // Add filter to your routes
-$r->get('/something/, function() {
+$r->get('/something/', function() {
 
 }, ['before' => 'myfilter', 'after' => 'anotherfilter']);
 
 // Add multiple filters by combining them with |
-$r->get('/something/, function() {
+$r->get('/something/', function() {
 
 }, ['before' => 'myfilter|anotherfilter']);
 
@@ -224,7 +224,7 @@ $r->get('/', function() {
 
 }, ['before' => 'beforefilter', 'after' => 'afterfilter', 'name' => 'somename']);
 
-$route = $this->getMatch('GET', '/');
+$route = $r->getMatch('GET', '/');
 
 // Returns:
 // object =>
