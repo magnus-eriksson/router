@@ -2,6 +2,8 @@
 
 A one-file router with groups, prefix and before/after filters.
 
+> I'm not claiming that this router is faster or better than other routers out there. It's kind of hard to beat something like [nikic/FastRoute](https://github.com/nikic/FastRoute). The two main reasons for building this was: 1. I wanted a simple but yet flexible, plug and play router with minimal to none setup. 2. It's fun to build stuff and you learn a lot from it!
+
 ## Install
 
 Clone this repository or use composer to download the library with the following command:
@@ -10,26 +12,16 @@ composer require maer/router dev-master
 ```
 _Change `dev-master` to the last tagged release._
 
-## Set up
-
-Load the library via composers autoloader:
-
-```
-include '/path/to/vendor/autoload.php';
-```
-
-Load the library manually:
-
-```
-include '/path/to/library/src/Router.php';
-```
 
 ## Simple example
 
 ```
+// Load composers autoloader
+include '/path/to/vendor/autoload.php';
+
 $r = new Maer\Router\Router;
 
-// Define a route
+// Define routes
 $r->get('/', function() {
     return "Hello there";
 });
@@ -45,7 +37,7 @@ $r->connect('/', function() {});
 $r->trace('/', function() {});
 $r->any('/', function() {}); // Catches all methods
 
-// ...or if you want to use some non-standard verb
+// ...or if you want to use some non-standard HTTP verb
 $r->add('SOMEVERB', '/', function() {});
 
 // ...or if you want to define multiple verbs at once
@@ -60,26 +52,42 @@ echo $response;
 
 ## Route parameters
 
-To set up route parameters, add a placeholder wrapped in parentheses:
+There are some placeholders you can use for route parameters. All parameters will be passed along to the controller in the same order as they are defined in the route:
 
 ```
-$r->get('/something/(:alpha)', function($arg) {
+// Match any alpha [a-z] character
+$r->get('/something/(:alpha)', function($param) {
 
 });
+
+// Match any numeric [0-9.,] character. It can also start with a -
+$r->get('/something/(:num)', function($param) {
+
+});
+
+// Match any alphanumeric [a-z0-9] character
+$r->get('/something/(:alphanum)', function($param) {
+
+});
+
+// Match any character (except /) [^/] character
+$r->get('/something/(:any)', function($param) {
+
+});
+
+// Append ? to making a parameter optional.
+$r->get('/something/(:alpha)?', function($param = null){
+    // Matches /something and /something/anything
+});
+
+// Combine mutliple placeholders
+$r->get('/something/(:alpha)/(:any)/(:alphanum)?', function($param, $param2, $param3 = null) {
+
+});
+
 ```
 
-Available route parameters:
-
-|Placeholder    |Contains                         |
-|---------------|---------------------------------|
-|(:alphanum)    | Any alpha numeric characters    |
-|(:alpha)       | Any alpha character             |
-|(:num)         | Any numeric value               |
-|(:any)         | Any character, except `/`       |
-
-
-
-## Callbacks
+## Route Callback
 
 Route callbacks can be defined in different ways:
 
@@ -96,49 +104,76 @@ $r-get('/', 'Namespace\Classname@methodName');
 
 // Static class method
 $r->get('/', 'Namespace\Classname::methodName');
-
 ```
+All callbacks will receive any route parameter.
+
+_If you send in a class method (non static), the router will instantiate the class and then call the method, when the router is dispatched and a match is found._
 
 ## Filters
 
-Every route can have one or more before and after filters. Before filters are, as you might expect, triggered before the route callback is triggered and the after filter, after.
+There are `before` and `after` filters:
 
-### Defining filters
 ```
-$r->filter('a_before_filter', function() {
+// Defining filters
+$r->filter('myfilter', function() {
     // Do some magic stuff.
 });
 
-$r->filter('an_after_filter', function() {
+$r->filter('anotherfilter', function() {
     // Do some magic stuff.
 });
-```
 
-_You can define filter callbacks in the same way as you define route callbacks_
+// Add filter to your routes
+$r->get('/something/, function() {
 
+}, ['before' => 'myfilter', 'after' => 'anotherfilter']);
 
-### Using filters
+// Add multiple filters by combining them with |
+$r->get('/something/, function() {
 
-```
-$r->get('/', 'Classname@methodName', [
-    'before' => 'a_before_filter',
-    'after' => 'an_after_filter'
-]);
-
-// Defining more filters, separating them with a `|` sign:
-['before' => 'filter1|filter2|filter3|...']
-```
-
-### Filter responses
-
-If a filter returns anything other than null, the dispatch chain will stop and that value will be returned instead. This is good for stopping the route if a specific criteria isn't met.
-
-## Group routes
-
-If there are many routes that will use the same filters and/or prefix (more on that later), you can group those routes together:
+}, ['before' => 'myfilter|anotherfilter']);
 
 ```
-$r->group(['before' => 'a_before_filter', 'after' => 'an_after_filter'], function($r) {
+
+Filter callbacks can be in the same formats as Route callbacks, meaning that you can use class methods as filters.
+
+The before filter will receive all route parameter, just like the route callback. The after filter will also receive all parameters, but the first parameter will be be the response from the route callback.
+
+**Note:** Filters will be called in the same order as they were defined. If any filter returns anything other than `null`, the dispatch will stop and that response will be returned instead.
+
+
+## Named routes
+
+Add a name to any route
+
+```
+// Name a route
+$r->get('/something', function() {
+
+}, ['name' => 'some-page']);
+
+// Resolve a named route
+echo $r->getRoute('some-page');
+// Returns: /something
+
+// With route parameters
+$r->get('/something/(:any)/(:any)', function($param1, $param2) {
+
+});
+
+// Resolve and pass values for the placeholders
+echo $r->getRoute('some-page', ['first', 'second']);
+// Returns: /something/first/second
+```
+
+If you don't pass enough arguments to cover all required parameters, an exception will be thrown.
+
+## Grouping routes
+
+Instead of adding the same filters over and over for many routes, it's easier to group them together.
+
+```
+$r->group(['before' => 'a_before_filter'], function($r) {
 
     $r->get('/', function() {
         //....
@@ -150,9 +185,12 @@ $r->group(['before' => 'a_before_filter', 'after' => 'an_after_filter'], functio
 ```
 The `$r->group()`-method only takes an anonymous function as callback. The router instance is always passed as an argument to the callback.
 
-### Prefix
+When defining a group, you can add `before` and `after` filters, just like you do for routes. You can also use a `prefix` for a group, as described below.
 
-Just like with filters, there might be multiple routes with the same prefix (like for admin routes, where all starts with '/admin'). Just pass `'prefix'` to the group:
+
+### Group Prefix
+
+To add the same prefix to a group, use the `prefix` argument.
 
 ```
 $r->group(['prefix' => '/admin'], function() {
@@ -180,16 +218,19 @@ To dispatch the router, it's usually enough to just call the `$r->dispatch()`-me
 $response = $r->dispatch('GET', '/some/url');
 ```
 
-To get the matched router without the any callbacks (both filters and route callback) being triggered, use the `$r->getMatch()` method instead.
+If you rather trigger all the callbacks (filters and route callbacks) yourself, if you, for example, are using an IoC container, call the `$r->getMatch()` method instead and you will get the matched route object back.
 
 ```
-$r->get('/', function() {});
+$r->get('/', function() {
+
+}, ['before' => 'beforefilter', 'after' => 'afterfilter', 'name' => 'somename']);
 
 $route = $this->getMatch('GET', '/');
 
 // Returns:
 // object =>
 //     pattern   => "/group1"
+//     name      => "somename",
 //     callback  => object(Closure)#8 (0) {}
 //     before    => ['beforefilter'],
 //     after     => ['afterfilter'],
@@ -202,9 +243,6 @@ If the before and after filters are closures, you can trigger them via:
 ```
 $response = $r->executeCallback('beforefilter');
 ```
-
-
-## More info to come...
 
 ---
 If you have any questions, suggestions or issues, let me know!

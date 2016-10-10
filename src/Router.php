@@ -14,6 +14,7 @@ class Router
     protected $after     = [];
     protected $callbacks = [];
     protected $routes    = [];
+    protected $names     = [];
 
 
     /**
@@ -21,6 +22,8 @@ class Router
      *
      * @param  string $method
      * @param  array  $args
+     *
+     * @throws Exception If the method isn't one of the registerd HTTP verbs
      *
      * @return $this
      */
@@ -61,12 +64,14 @@ class Router
 
         $before = $this->getParam($params, 'before');
         $after  = $this->getParam($params, 'after');
+        $name   = $this->getParam($params, 'name');
 
         $before = $before ? explode('|', $params['before']) : [];
         $after  = $after  ? explode('|', $params['after']) : [];
 
         $this->storeRoute($method, [
             'pattern'  => $pattern,
+            'name'     => $name,
             'callback' => $callback,
             'before'   => array_merge($this->before, $before),
             'after'    => array_merge($this->after, $after),
@@ -130,6 +135,10 @@ class Router
      * @param  string $method
      * @param  string $path
      *
+     * @throws Maer\Router\MethodNotAllowedException If the pattern was found,
+     *         but with the wrong HTTP verb
+     * @throws Maer\Router\NotFoudException If the pattern was not found
+     *
      * @return object
      */
     public function getMatch($method = null, $path = null)
@@ -145,7 +154,7 @@ class Router
             );
 
             if ($matches) {
-                $r = $this->getRoute($pattern, $method);
+                $r = $this->getRouteObject($pattern, $method);
 
                 if (!$r) {
                     throw new MethodNotAllowedException;
@@ -183,6 +192,10 @@ class Router
      * @param  string $method
      * @param  string $path
      *
+     * @throws Maer\Router\MethodNotAllowedException If the pattern was found,
+     *         but with the wrong HTTP verb
+     * @throws Maer\Router\NotFoudException If the pattern was not found
+     *
      * @return mixed
      */
     public function dispatch($method = null, $path = null)
@@ -196,17 +209,18 @@ class Router
             }
         }
 
-        $response = $this->executeCallback($match->callback, $match->args, true);
-        if (!is_null($response)) {
-            return $response;
-        }
+        $routeResponse = $this->executeCallback($match->callback, $match->args, true);
 
         foreach ($match->after as $filter) {
+            array_unshift($match->args, $routeResponse);
             $response = $this->executeCallback($filter, $match->args, true);
             if (!is_null($response)) {
                 return $response;
             }
         }
+
+        return $routeResponse;
+
     }
 
 
@@ -217,11 +231,9 @@ class Router
      */
     public function getRequestMethod()
     {
-        if (!isset($_SERVER['REQUEST_METHOD'])) {
-            throw new Exception('No request method found');
-        }
-
-        return strtoupper($_SERVER['REQUEST_METHOD']);
+        return isset($_SERVER['REQUEST_METHOD'])
+            ? strtoupper($_SERVER['REQUEST_METHOD'])
+            : null;
     }
 
 
@@ -232,12 +244,9 @@ class Router
      */
     public function getRequestPath()
     {
-        if (!isset($_SERVER['REQUEST_URI'])) {
-            throw new Exception('No request path found');
-        }
-
-        $path = trim(strtok($_SERVER['REQUEST_URI'], '?'), '/');
-        return "/" . $path;
+        return isset($_SERVER['REQUEST_URI'])
+            ? '/' . trim(strtok($_SERVER['REQUEST_URI'], '?'), '/')
+            : null;
     }
 
 
@@ -247,6 +256,9 @@ class Router
      * @param  mixed   $cb
      * @param  array   $args
      * @param  boolean $filter Set if the callback is a filter or not
+     *
+     * @throws Exception If the filter is unknown
+     * @throws Exception If the callback isn't in one of the accepted formats
      *
      * @return mixed
      */
@@ -270,13 +282,73 @@ class Router
 
         if ($filter) {
             if (!isset($this->filters[$cb])) {
-                throw new \Exception("Undefined filter '{$cb}'");
+                throw new Exception("Undefined filter '{$cb}'");
             }
 
             return call_user_func_array($this->filters[$cb], $args);
         }
 
-        throw new \Exception('Invalid callback');
+        throw new Exception('Invalid callback');
+    }
+
+
+    /**
+     * Get the URL of a named route
+     *
+     * @param  string $name
+     * @param  array  $args
+     *
+     * @throws Exception If there aren't enough arguments for all required parameters
+     *
+     * @return string
+     */
+    public function getRoute($name, array $args = [])
+    {
+        if (!isset($this->names[$name])) {
+            return null;
+        }
+
+        $route   = $this->callbacks[$this->names[$name]];
+
+        if (strpos($route->pattern, '(') === false) {
+            // If we don't have any route parameters, just return the pattern
+            // straight off. No need for any regex stuff.
+            return $route->pattern;
+        }
+
+        // Convert all placeholders to %o = optional and %r = required
+        $from    = ['/(\([^\/]+[\)]+[\?])/', '/(\([^\/]+\))/'];
+        $to      = ['%o', '%r'];
+        $pattern = preg_replace($from, $to, $route->pattern);
+
+        $frags   = explode('/', trim($pattern, '/'));
+        $url     = [];
+
+        // Loop thru the pattern fragments and insert the arguments
+        foreach ($frags as $frag) {
+            if ($frag == '%r') {
+                if (!$args) {
+                    // A required parameter, but no more arguments.
+                    throw new Exception('Missing route parameters');
+                }
+                $url[] = array_shift($args);
+                continue;
+            }
+
+            if ($frag == "%o") {
+                if (!$args) {
+                    // No argument for the optional parameter,
+                    // just continue the iteration.
+                    continue;
+                }
+                $url[] = array_shift($args);
+                continue;
+            }
+
+            $url[] = $frag;
+        }
+
+        return '/' . implode('/', $url);
     }
 
 
@@ -304,13 +376,10 @@ class Router
      */
     protected function regexifyPattern($pattern)
     {
+        $pattern = str_replace('/(', "(/", $pattern);
+
         $from = ['\:alphanum\\', '\:alpha\\', '\:num\\', '\:any\\', '\?', '\(', '\)'];
         $to   = ['[a-zA-Z0-9]+', '[a-zA-Z]+', '[\-]?[\d\,\.]+', '[^\/]+', '?', '(', ')'];
-
-        $pattern = str_replace('/(/', "(/", $pattern);
-        echo "<pre>";
-        var_dump($pattern);
-
         $pattern = preg_quote($pattern, '/');
         $pattern = str_replace($from, $to, $pattern);
 
@@ -326,7 +395,7 @@ class Router
      *
      * @return object|null
      */
-    protected function getRoute($pattern, $method)
+    protected function getRouteObject($pattern, $method)
     {
         foreach ([$method, 'ANY'] as $verb) {
             if (array_key_exists($verb, $this->routes[$pattern])) {
@@ -373,6 +442,10 @@ class Router
 
         if (!isset($this->routes[$route['pattern']])) {
             $this->routes[$route['pattern']] = [];
+        }
+
+        if ($route['name']) {
+            $this->names[$route['name']] = $index;
         }
 
         foreach ($methods as $method) {
