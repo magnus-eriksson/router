@@ -115,14 +115,17 @@ class Router
 
         if ($prefix) {
             array_pop($this->prefixes);
+            $this->prefix = $this->prefixes ? '/' . trim(implode('/', $this->prefixes), '/') : null;
         }
 
         if ($before) {
-            array_pop($this->before);
+            array_pop($this->befores);
+            $this->before = explode('|', implode('|', $this->befores));
         }
 
         if ($after) {
-            array_pop($this->after);
+            array_pop($this->afters);
+            $this->after = explode('|', implode('|', $this->afters));
         }
 
         return $this;
@@ -143,6 +146,10 @@ class Router
      */
     public function getMatch($method = null, $path = null)
     {
+        #echo "<pre>";
+        #var_dump($this);
+        #exit;
+
         $method = $method ?: $this->getRequestMethod();
         $path   = $path ?: $this->getRequestPath();
 
