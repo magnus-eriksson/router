@@ -30,11 +30,23 @@ class Router
     public function __call($method, $args)
     {
         $method = strtoupper($method);
-        $verbs = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPITIONS', 'CONNECT', 'TRACE', 'ANY'];
+        $verbs  = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPITIONS', 'CONNECT', 'TRACE', 'ANY'];
 
         if (!in_array($method, $verbs)) {
             throw new Exception("Call to undefined method '{$method}'");
         }
+
+        if (isset($args[0]) && is_array($args[0])) {
+            if (count($args[0]) > 1) {
+                if (!isset($args[2]) || !is_array($args[2])) {
+                    $args[2] = [];
+                }
+                $args[2]['name'] = $args[0][1];
+            }
+
+            $args[0] = $args[0][0];
+        }
+
 
         array_unshift($args, $method);
         return call_user_func_array([$this, 'add'], $args);
@@ -146,12 +158,10 @@ class Router
      */
     public function getMatch($method = null, $path = null)
     {
-        #echo "<pre>";
-        #var_dump($this);
-        #exit;
-
         $method = $method ?: $this->getRequestMethod();
         $path   = $path ?: $this->getRequestPath();
+
+        $method = strtoupper($method);
 
         foreach ($this->routes as $pattern => $methods) {
             preg_match(
@@ -280,6 +290,9 @@ class Router
         }
 
         if (is_array($cb) && count($cb) == 2) {
+            if (!is_object($cb[0])) {
+                $cb[0] = new $cb[0];
+            }
             return call_user_func_array([new $cb[0], $cb[1]], $args);
         }
 
