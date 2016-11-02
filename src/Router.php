@@ -220,6 +220,9 @@ class Router
         $match = $this->getMatch($method, $path);
 
         foreach ($match->before as $filter) {
+            if (empty($filter)) {
+                continue;
+            }
             $response = $this->executeCallback($filter, $match->args, true);
             if (!is_null($response)) {
                 return $response;
@@ -229,6 +232,9 @@ class Router
         $routeResponse = $this->executeCallback($match->callback, $match->args, true);
 
         foreach ($match->after as $filter) {
+            if (empty($filter)) {
+                continue;
+            }
             array_unshift($match->args, $routeResponse);
             $response = $this->executeCallback($filter, $match->args, true);
             if (!is_null($response)) {
