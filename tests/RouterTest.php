@@ -37,6 +37,10 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $this->router->get(['/last', 'last'], function () {
             return 'last route';
         });
+
+        $this->router->get('/all/(:all)', function ($param) {
+            return $param;
+        });
     }
 
     public function testGetRoute()
@@ -79,6 +83,9 @@ class RouterTest extends PHPUnit_Framework_TestCase
 
         $response = $this->router->dispatch('GET', '/test/first/second');
         $this->assertEquals("test route, first, second", $response, 'Test dispatch test, 2 params');
+
+        $response = $this->router->dispatch('GET', '/all/hello/world');
+        $this->assertEquals("hello/world", $response, "Test :all");
     }
 }
 

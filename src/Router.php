@@ -404,8 +404,8 @@ class Router
     {
         $pattern = str_replace('/(', "(/", $pattern);
 
-        $from = ['\:alphanum\\', '\:alpha\\', '\:num\\', '\:any\\', '\?', '\(', '\)'];
-        $to   = ['[a-zA-Z0-9]+', '[a-zA-Z]+', '[\-]?[\d\,\.]+', '[^\/]+', '?', '(', ')'];
+        $from = ['\:all\\', '\:alphanum\\', '\:alpha\\', '\:num\\', '\:any\\', '\?', '\(', '\)'];
+        $to   = ['.*', '[a-zA-Z0-9]+', '[a-zA-Z]+', '[\-]?[\d\,\.]+', '[^\/]+', '?', '(', ')'];
         $pattern = preg_quote($pattern, '/');
         $pattern = str_replace($from, $to, $pattern);
 
