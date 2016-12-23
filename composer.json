@@ -1,5 +1,6 @@
 {
     "name": "maer/router",
+    "description": "A small, simple, extendable one-file PHP router with groups, filters and named routes",
     "type": "library",
     "license": "MIT",
     "authors": [

@@ -4,7 +4,7 @@
 [![Build Status](https://api.travis-ci.org/magnus-eriksson/router.svg)](https://travis-ci.org/magnus-eriksson/router)
 
 
-A one-file router with groups, prefix and before/after filters.
+A small, simple, extendable one-file PHP router with groups, filters and named routes
 
 > I'm not claiming that this router is faster or better than other routers out there. It's kind of hard to beat something like [nikic/FastRoute](https://github.com/nikic/FastRoute). The two main reasons for building this was: 1. I wanted a simple but yet flexible, plug and play router with minimal to none setup. 2. It's fun to build stuff and you learn a lot from it!
 
