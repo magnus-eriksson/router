@@ -8,6 +8,25 @@ A small, simple, extendable one-file PHP router with groups, filters and named r
 
 > I'm not claiming that this router is faster or better than other routers out there. It's kind of hard to beat something like [nikic/FastRoute](https://github.com/nikic/FastRoute). The two main reasons for building this was: 1. I wanted a simple but yet flexible, plug and play router with minimal to none setup. 2. It's fun to build stuff and you learn a lot from it!
 
+
+## Usage
+
+* [Install](#install)
+* [Simple Example](#simple-example)
+* [Route parameters](#route-parameters)
+* [Route callbacks](#route-callbacks)
+* [Filters](#filters)
+* [Named routes](#named-routes)
+* [Grouping routes](#grouping-routes)
+    * [Group prefix](#group-prefix)
+* [Dispatch the router](#dispatch-the-router)
+    * [Not found](#not-found)
+    * [Method not allowed](#method-not-allowed)
+
+
+
+
+
 ## Install
 
 Clone this repository or use composer to download the library with the following command:
@@ -60,22 +79,27 @@ There are some placeholders you can use for route parameters. All parameters wil
 ```php
 // Match any alpha [a-z] character
 $r->get('/something/(:alpha)', function($param) {
-
+    // Do stuff
 });
 
 // Match any numeric [0-9.,] character. It can also start with a -
 $r->get('/something/(:num)', function($param) {
-
+    // Do stuff
 });
 
 // Match any alphanumeric [a-z0-9] character
 $r->get('/something/(:alphanum)', function($param) {
-
+    // Do stuff
 });
 
 // Match any character (except /) [^/] character
 $r->get('/something/(:any)', function($param) {
+    // Do stuff
+});
 
+// Catch-all. Match all routes, including / (.*)
+$r->get('/something/(:any)', function($param) {
+    // Do stuff
 });
 
 // Append ? to making a parameter optional.
@@ -85,12 +109,12 @@ $r->get('/something/(:alpha)?', function($param = null){
 
 // Combine mutliple placeholders
 $r->get('/something/(:alpha)/(:any)/(:alphanum)?', function($param, $param2, $param3 = null) {
-
+    // Do stuff
 });
 
 ```
 
-## Route Callback
+## Route callbacks
 
 Route callbacks can be defined in different ways:
 
@@ -101,12 +125,12 @@ $r->get('/', function() {
 });
 
 // Class method
-$r->get('/', ['Namespace\Classname', 'methodName']);
+$r->get('/', ['Namespace\ClassName', 'methodName']);
 // or
-$r->get('/', 'Namespace\Classname@methodName');
+$r->get('/', 'Namespace\ClassName@methodName');
 
 // Static class method
-$r->get('/', 'Namespace\Classname::methodName');
+$r->get('/', 'Namespace\ClassName::methodName');
 ```
 All callbacks will receive any route parameter.
 
@@ -246,6 +270,31 @@ If the before and after filters are closures, you can trigger them via:
 ```php
 $response = $r->executeCallback('beforefilter');
 ```
+
+### Not found
+
+If there is no match, a `Maer\Router\NotFoundException` will be thrown. You can register a callback that will be executed instead, using the `$router->notFound()`-method:
+
+```php
+$r->notFound(function() {
+    return "Ops! The page was not found!";
+});
+
+// Callbacks can be in all the same formats as for routes
+```
+
+### Method not allowed
+
+If there is a url match but with the wrong http verb, a `Maer\Router\MethodNotAllowedException` will be thrown. You can register a callback that will be executed instead, using the `$router->methodNotAllowed()`-method:
+
+```php
+$r->methodNotAllowed(function() {
+    return "Ops! Method not allowed!";
+});
+
+// Callbacks can be in all the same formats as for routes
+```
+
 
 ---
 If you have any questions, suggestions or issues, let me know!

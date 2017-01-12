@@ -87,6 +87,59 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $response = $this->router->dispatch('GET', '/all/hello/world');
         $this->assertEquals("hello/world", $response, "Test :all");
     }
+
+    /**
+     * @expectedException Maer\Router\NotFoundException
+     */
+    public function testNotFoundException()
+    {
+        $router = new Maer\Router\Router;
+        $router->dispatch();
+    }
+
+    public function testNotFoundCallback()
+    {
+        // Closure
+        $router = new Maer\Router\Router;
+        $router->notFound(function () {
+            return 'foo';
+        });
+        $this->assertEquals('foo', $router->dispatch(), 'Closure');
+
+        // Class method
+        $router = new Maer\Router\Router;
+        $router->notFound('Controller@fooCallback');
+        $this->assertEquals('foo', $router->dispatch(), 'Closure');
+
+    }
+
+    /**
+     * @expectedException Maer\Router\MethodNotAllowedException
+     */
+    public function testMethodNotAllowedException()
+    {
+        $router = new Maer\Router\Router;
+        $router->get('/', 'dummy');
+        $router->dispatch('POST', '/');
+    }
+
+    public function testMethodNotAllowedCallback()
+    {
+        // Closure
+        $router = new Maer\Router\Router;
+        $router->post('/', 'dummy');
+        $router->methodNotAllowed(function () {
+            return 'foo';
+        });
+        $this->assertEquals('foo', $router->dispatch('GET', '/'), 'Closure');
+
+        // Class method
+        $router = new Maer\Router\Router;
+        $router->post('/', 'dummy');
+        $router->methodNotAllowed('Controller@fooCallback');
+        $this->assertEquals('foo', $router->dispatch('GET', '/'), 'Closure');
+
+    }
 }
 
 class Controller
@@ -102,5 +155,10 @@ class Controller
         }
 
         return 'test route, ' . $p1 . ', ' . $p2;
+    }
+
+    public function fooCallback()
+    {
+        return 'foo';
     }
 }

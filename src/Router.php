@@ -5,6 +5,9 @@ use Exception;
 
 class Router
 {
+    const NOT_FOUND = 404;
+    const METHOD_NOT_ALLOWED = 405;
+
     protected $filters   = [];
     protected $prefixes  = [];
     protected $prefix    = '';
@@ -15,6 +18,8 @@ class Router
     protected $callbacks = [];
     protected $routes    = [];
     protected $names     = [];
+    protected $notFound;
+    protected $methodNotAllowed;
 
 
     /**
@@ -174,6 +179,15 @@ class Router
                 $r = $this->getRouteObject($pattern, $method);
 
                 if (!$r) {
+                    if ($this->methodNotAllowed) {
+                        return (object) [
+                            'before'   => [],
+                            'after'    => [],
+                            'args'     => [],
+                            'callback' => &$this->methodNotAllowed,
+                        ];
+                    }
+
                     throw new MethodNotAllowedException;
                 }
 
@@ -182,6 +196,15 @@ class Router
 
                 return $r;
             }
+        }
+
+        if ($this->notFound) {
+            return (object) [
+                'before'   => [],
+                'after'    => [],
+                'args'     => [],
+                'callback' => &$this->notFound,
+            ];
         }
 
         throw new NotFoundException;
@@ -270,6 +293,32 @@ class Router
         return isset($_SERVER['REQUEST_URI'])
             ? '/' . trim(strtok($_SERVER['REQUEST_URI'], '?'), '/')
             : null;
+    }
+
+
+    /**
+     * Add a callback for not found
+     *
+     * @param  string|Closire|array $callback
+     *
+     * @return $this
+     */
+    public function notFound($callback)
+    {
+        $this->notFound = $callback;
+    }
+
+
+    /**
+     * Add a callback for method not allowed
+     *
+     * @param  string|Closire|array $callback
+     *
+     * @return $this
+     */
+    public function methodNotAllowed($callback)
+    {
+        $this->methodNotAllowed = $callback;
     }
 
 
