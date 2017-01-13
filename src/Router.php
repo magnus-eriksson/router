@@ -35,7 +35,7 @@ class Router
     public function __call($method, $args)
     {
         $method = strtoupper($method);
-        $verbs  = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPITIONS', 'CONNECT', 'TRACE', 'ANY'];
+        $verbs  = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS', 'CONNECT', 'TRACE', 'ANY'];
 
         if (!in_array($method, $verbs)) {
             throw new Exception("Call to undefined method '{$method}'");
