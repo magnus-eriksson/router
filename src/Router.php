@@ -384,7 +384,10 @@ class Router
             return call_user_func_array($this->resolver, [$callback]);
         }
 
-        return $callback;
+        return [
+            new $callback[0],
+            $callback[1]
+        ];
     }
 
 
