@@ -22,6 +22,7 @@ A small, simple, extendable one-file PHP router with groups, filters and named r
 * [Dispatch the router](#dispatch-the-router)
     * [Not found](#not-found)
     * [Method not allowed](#method-not-allowed)
+* [Adding a custom callback resolver](#adding-a-custom-callback-resolver)
 
 
 
@@ -295,7 +296,21 @@ $r->methodNotAllowed(function() {
 // Callbacks can be in all the same formats as for routes
 ```
 
+## Adding a custom callback resolver
 
+If your callback is in the format of `['Classname', 'method']`, you might want to customize how it's resolved. This is handy if you, for example, are using some kind of IoC with dependency injection.
+
+To create your custom resolver, use the `$r->resolver()`-method. Example:
+
+```php
+$r->resolver(function($callback) use($container) {
+    // The argument will always be an array with ['Class', 'method']
+    return [
+        $container->get($callback[0]),
+        $container[1]
+    ];
+});
+```
 ---
 If you have any questions, suggestions or issues, let me know!
 

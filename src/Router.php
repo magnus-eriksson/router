@@ -20,6 +20,7 @@ class Router
     protected $names     = [];
     protected $notFound;
     protected $methodNotAllowed;
+    protected $resolver;
 
 
     /**
@@ -346,9 +347,9 @@ class Router
 
         if (is_array($cb) && count($cb) == 2) {
             if (!is_object($cb[0])) {
-                $cb[0] = new $cb[0];
+                $cb = $this->resolveCallback($cb);
             }
-            return call_user_func_array([new $cb[0], $cb[1]], $args);
+            return call_user_func_array($cb, $args);
         }
 
         if (is_string($cb) && strpos($cb, "::") !== false) {
@@ -360,10 +361,42 @@ class Router
                 throw new Exception("Undefined filter '{$cb}'");
             }
 
+            if (is_array($this->filters[$cb]) && count($this->filters[$cb]) == 2) {
+                $this->filters[$cb] = $this->resolveCallback($this->filters[$cb]);
+            }
+
             return call_user_func_array($this->filters[$cb], $args);
         }
 
         throw new Exception('Invalid callback');
+    }
+
+
+    /**
+     * Resolve callback
+     *
+     * @param  callable $callback
+     * @return array
+     */
+    protected function resolveCallback($callback)
+    {
+        if ($this->resolver) {
+            return call_user_func_array($this->resolver, [$callback]);
+        }
+
+        return $callback;
+    }
+
+
+    /**
+     * Add a resolver for callbacks of the type: ['Classname', 'method']
+     * @param  callable $resolver
+     * @return $this
+     */
+    public function resolver(callable $resolver)
+    {
+        $this->resolver = $resolver;
+        return $this;
     }
 
 
