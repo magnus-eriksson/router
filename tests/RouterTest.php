@@ -110,7 +110,6 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $router = new Maer\Router\Router;
         $router->notFound('Controller@fooCallback');
         $this->assertEquals('foo', $router->dispatch(), 'Closure');
-
     }
 
     /**
@@ -138,8 +137,29 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $router->post('/', 'dummy');
         $router->methodNotAllowed('Controller@fooCallback');
         $this->assertEquals('foo', $router->dispatch('GET', '/'), 'Closure');
-
     }
+
+    public function testIdenticalRoutesDifferentMethods()
+    {
+        $router = new Maer\Router\Router;
+        $router->get('/', function () { return 'GET /'; });
+        $router->post('/', function () { return 'POST /'; });
+
+        $this->assertEquals('GET /', $router->dispatch('GET', '/'));
+        $this->assertEquals('POST /', $router->dispatch('POST', '/'));
+    }
+
+    public function testIdenticalRoutesWithOptionalParamsDifferentMethods()
+    {
+        $router = new Maer\Router\Router;
+        $router->get('/test/(:alpha)?', function () { return 'GET /test'; });
+        $router->post('/test', function () { return 'POST /test'; });
+
+        $this->assertEquals('GET /test', $router->dispatch('GET', '/test'));
+        $this->assertEquals('GET /test', $router->dispatch('GET', '/test/hello'));
+        $this->assertEquals('POST /test', $router->dispatch('POST', '/test'));
+    }
+
 }
 
 class Controller
