@@ -169,27 +169,18 @@ class Router
 
         $method = strtoupper($method);
 
+        $methodNotAllowed = null;
+
         foreach ($this->routes as $pattern => $methods) {
-            preg_match(
-                $this->regexifyPattern($pattern),
-                $path,
-                $matches
-            );
+            preg_match($this->regexifyPattern($pattern), $path, $matches);
 
             if ($matches) {
                 $r = $this->getRouteObject($pattern, $method);
 
                 if (!$r) {
-                    if ($this->methodNotAllowed) {
-                        return (object) [
-                            'before'   => [],
-                            'after'    => [],
-                            'args'     => [],
-                            'callback' => &$this->methodNotAllowed,
-                        ];
-                    }
-
-                    throw new MethodNotAllowedException;
+                    // We found a match but with the wrong method
+                    $methodNotAllowed = true;
+                    continue;
                 }
 
                 $r->method = strtoupper($method);
@@ -197,6 +188,19 @@ class Router
 
                 return $r;
             }
+        }
+
+        if ($methodNotAllowed) {
+            if ($this->methodNotAllowed) {
+                return (object) [
+                    'before'   => [],
+                    'after'    => [],
+                    'args'     => [],
+                    'callback' => &$this->methodNotAllowed,
+                ];
+            }
+
+            throw new MethodNotAllowedException;
         }
 
         if ($this->notFound) {
