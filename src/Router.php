@@ -110,7 +110,7 @@ class Router
      */
     public function group(array $params, $callback)
     {
-        $prefix = $this->getParam($params, 'prefix');
+        $prefix = trim($this->getParam($params, 'prefix'), '/');
         $before = $this->getParam($params, 'before');
         $after  = $this->getParam($params, 'after');
 

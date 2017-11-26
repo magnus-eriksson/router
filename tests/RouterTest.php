@@ -27,11 +27,9 @@ class RouterTest extends PHPUnit_Framework_TestCase
         );
 
         $this->router->group(['prefix' => 'grp'], function ($router) {
-
             $this->router->get(['/', 'grp.home'], function () {
                 return 'grp home route';
             });
-
         });
 
         $this->router->get(['/last', 'last'], function () {
@@ -40,6 +38,14 @@ class RouterTest extends PHPUnit_Framework_TestCase
 
         $this->router->get('/all/(:all)', function ($param) {
             return $param;
+        });
+
+        $this->router->group(['prefix' => '/(:any)'], function ($router) {
+            $router->group(['prefix' => '/(:any)'], function ($router) {
+                $router->get('/', function ($param1, $param2) {
+                    return "{$param1}:{$param2}";
+                }, ['name' => 'nested_params']);
+            });
         });
     }
 
@@ -68,6 +74,10 @@ class RouterTest extends PHPUnit_Framework_TestCase
         // Last
         $route = $this->router->getRoute('last');
         $this->assertEquals("/last", $route, 'Test get last route');
+
+        // Nested route params
+        $route = $this->router->getRoute('nested_params', ['test1', 'test2']);
+        $this->assertEquals("/test1/test2", $route, 'Test get nested params');
     }
 
     public function testDispatch()
@@ -86,6 +96,9 @@ class RouterTest extends PHPUnit_Framework_TestCase
 
         $response = $this->router->dispatch('GET', '/all/hello/world');
         $this->assertEquals("hello/world", $response, "Test :all");
+
+        $response = $this->router->dispatch('GET', '/hello/world');
+        $this->assertEquals("hello:world", $response, "Test nested_params");
     }
 
     /**
