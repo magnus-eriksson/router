@@ -173,6 +173,27 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $this->assertEquals('POST /test', $router->dispatch('POST', '/test'));
     }
 
+    /**
+     * @expectedException Maer\Router\ControllerNotFoundException
+     */
+    public function testInvalidController()
+    {
+        $router = new Maer\Router\Router;
+        $router->get('/test', 'NonExistentController@callback');
+
+        $router->dispatch('GET', '/test');
+    }
+
+    /**
+     * @expectedException Maer\Router\ControllerNotFoundException
+     */
+    public function testInvalidControllerMethod()
+    {
+        $router = new Maer\Router\Router;
+        $router->get('/test', 'Controller@callback');
+
+        $router->dispatch('GET', '/test');
+    }
 }
 
 class Controller

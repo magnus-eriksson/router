@@ -353,6 +353,12 @@ class Router
             if (!is_object($cb[0])) {
                 $cb = $this->resolveCallback($cb);
             }
+
+            if (isset($cb[0], $cb[1]) && is_object($cb[0]) && !method_exists($cb[0], $cb[1]) ) {
+                $name = get_class($cb[0]);
+                throw new ControllerNotFoundException("Controller '{$name}->{$cb[1]}' not found");
+            }
+
             return call_user_func_array($cb, $args);
         }
 
@@ -386,6 +392,10 @@ class Router
     {
         if ($this->resolver) {
             return call_user_func_array($this->resolver, [$callback]);
+        }
+
+        if (!class_exists($callback[0])) {
+            throw new ControllerNotFoundException("Controller '{$callback[0]}' not found");
         }
 
         return [
