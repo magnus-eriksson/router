@@ -2,4 +2,6 @@
 
 use Exception;
 
-class ControllerNotFoundException extends Exception {}
+class ControllerNotFoundException extends Exception
+{
+}

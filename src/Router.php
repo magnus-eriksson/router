@@ -270,7 +270,6 @@ class Router
         }
 
         return $routeResponse;
-
     }
 
 
