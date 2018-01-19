@@ -5,7 +5,7 @@ use Exception;
 
 class Router
 {
-    const NOT_FOUND = 404;
+    const NOT_FOUND          = 404;
     const METHOD_NOT_ALLOWED = 405;
 
     protected $filters   = [];
@@ -85,7 +85,7 @@ class Router
         $name   = $this->getParam($params, 'name');
 
         $before = $before ? explode('|', $params['before']) : [];
-        $after  = $after  ? explode('|', $params['after']) : [];
+        $after  = $after ? explode('|', $params['after']) : [];
 
         $this->storeRoute($method, [
             'pattern'  => $pattern,
@@ -103,8 +103,8 @@ class Router
     /**
      * Create a new route group
      *
-     * @param  array  $params
-     * @param  mixed  $callback
+     * @param  array $params
+     * @param  mixed $callback
      *
      * @return $this
      */
@@ -156,11 +156,10 @@ class Router
      * @param  string $method
      * @param  string $path
      *
-     * @throws Maer\Router\MethodNotAllowedException If the pattern was found,
-     *         but with the wrong HTTP verb
-     * @throws Maer\Router\NotFoudException If the pattern was not found
-     *
      * @return object
+     *
+     * @throws MethodNotAllowedException
+     * @throws NotFoundException
      */
     public function getMatch($method = null, $path = null)
     {
@@ -192,7 +191,7 @@ class Router
 
         if ($methodNotAllowed) {
             if ($this->methodNotAllowed) {
-                return (object) [
+                return (object)[
                     'before'   => [],
                     'after'    => [],
                     'args'     => [],
@@ -204,7 +203,7 @@ class Router
         }
 
         if ($this->notFound) {
-            return (object) [
+            return (object)[
                 'before'   => [],
                 'after'    => [],
                 'args'     => [],
@@ -237,11 +236,11 @@ class Router
      * @param  string $method
      * @param  string $path
      *
-     * @throws Maer\Router\MethodNotAllowedException If the pattern was found,
-     *         but with the wrong HTTP verb
-     * @throws Maer\Router\NotFoudException If the pattern was not found
-     *
      * @return mixed
+     *
+     * @throws Exception
+     * @throws MethodNotAllowedException
+     * @throws NotFoundException
      */
     public function dispatch($method = null, $path = null)
     {
@@ -304,9 +303,7 @@ class Router
     /**
      * Add a callback for not found
      *
-     * @param  string|Closire|array $callback
-     *
-     * @return $this
+     * @param  string|Closure|array $callback
      */
     public function notFound($callback)
     {
@@ -317,9 +314,7 @@ class Router
     /**
      * Add a callback for method not allowed
      *
-     * @param  string|Closire|array $callback
-     *
-     * @return $this
+     * @param  string|Closure|array $callback
      */
     public function methodNotAllowed($callback)
     {
@@ -334,10 +329,10 @@ class Router
      * @param  array   $args
      * @param  boolean $filter Set if the callback is a filter or not
      *
+     * @return mixed
+     *
      * @throws Exception If the filter is unknown
      * @throws Exception If the callback isn't in one of the accepted formats
-     *
-     * @return mixed
      */
     public function executeCallback($cb, array $args = [], $filter = false)
     {
@@ -354,7 +349,7 @@ class Router
                 $cb = $this->resolveCallback($cb);
             }
 
-            if (isset($cb[0], $cb[1]) && is_object($cb[0]) && !method_exists($cb[0], $cb[1]) ) {
+            if (isset($cb[0], $cb[1]) && is_object($cb[0]) && !method_exists($cb[0], $cb[1])) {
                 $name = get_class($cb[0]);
                 throw new ControllerNotFoundException("Controller '{$name}->{$cb[1]}' not found");
             }
@@ -386,7 +381,10 @@ class Router
      * Resolve callback
      *
      * @param  callable $callback
+     *
      * @return array
+     *
+     * @throws ControllerNotFoundException
      */
     protected function resolveCallback($callback)
     {
@@ -407,7 +405,9 @@ class Router
 
     /**
      * Add a resolver for callbacks of the type: ['Classname', 'method']
+     *
      * @param  callable $resolver
+     *
      * @return $this
      */
     public function resolver(callable $resolver)
@@ -423,9 +423,9 @@ class Router
      * @param  string $name
      * @param  array  $args
      *
-     * @throws Exception If there aren't enough arguments for all required parameters
-     *
      * @return string
+     *
+     * @throws Exception If there aren't enough arguments for all required parameters
      */
     public function getRoute($name, array $args = [])
     {
@@ -433,7 +433,7 @@ class Router
             return null;
         }
 
-        $route   = $this->callbacks[$this->names[$name]];
+        $route = $this->callbacks[$this->names[$name]];
 
         if (strpos($route->pattern, '(') === false) {
             // If we don't have any route parameters, just return the pattern
@@ -446,8 +446,8 @@ class Router
         $to      = ['%o', '%r'];
         $pattern = preg_replace($from, $to, $route->pattern);
 
-        $frags   = explode('/', trim($pattern, '/'));
-        $url     = [];
+        $frags = explode('/', trim($pattern, '/'));
+        $url   = [];
 
         // Loop thru the pattern fragments and insert the arguments
         foreach ($frags as $frag) {
@@ -505,6 +505,7 @@ class Router
 
         $from = ['\:all\\', '\:alphanum\\', '\:alpha\\', '\:num\\', '\:any\\', '\?', '\(', '\)'];
         $to   = ['.*', '[a-zA-Z0-9]+', '[a-zA-Z]+', '[\-]?[\d\,\.]+', '[^\/]+', '?', '(', ')'];
+
         $pattern = preg_quote($pattern, '/');
         $pattern = str_replace($from, $to, $pattern);
 
@@ -518,7 +519,7 @@ class Router
      * @param  string $pattern
      * @param  string $method
      *
-     * @return object|null
+     * @return object|false
      */
     protected function getRouteObject($pattern, $method)
     {
@@ -536,7 +537,7 @@ class Router
     /**
      * Get and clean route arguments
      *
-     * @param  array  $match
+     * @param  array $match
      *
      * @return array
      */
@@ -545,7 +546,7 @@ class Router
         // Remove the first element, the matching regex
         array_shift($match);
 
-        // Iterate thru the arguments and remove any unwanted slashes
+        // Iterate through the arguments and remove any unwanted slashes
         foreach ($match as &$arg) {
             $arg = trim($arg, '/');
         }
@@ -557,13 +558,13 @@ class Router
     /**
      * Store a route in the route collection
      *
-     * @param  array  $methods
-     * @param  array  $route
+     * @param  array $methods
+     * @param  array $route
      */
     protected function storeRoute(array $methods, array $route)
     {
-        $this->callbacks[] = (object) $route;
-        $index = count($this->callbacks) - 1;
+        $this->callbacks[] = (object)$route;
+        $index             = count($this->callbacks) - 1;
 
         if (!isset($this->routes[$route['pattern']])) {
             $this->routes[$route['pattern']] = [];
