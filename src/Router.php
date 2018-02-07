@@ -250,20 +250,20 @@ class Router
             if (empty($filter)) {
                 continue;
             }
-            $response = $this->executeCallback($filter, $match->args, true);
+            $response = $this->executeCallback($this->getFilterCallback($filter), $match->args, true);
             if (!is_null($response)) {
                 return $response;
             }
         }
 
-        $routeResponse = $this->executeCallback($match->callback, $match->args, true);
+        $routeResponse = $this->executeCallback($match->callback, $match->args);
 
         foreach ($match->after as $filter) {
             if (empty($filter)) {
                 continue;
             }
             array_unshift($match->args, $routeResponse);
-            $response = $this->executeCallback($filter, $match->args, true);
+            $response = $this->executeCallback($this->getFilterCallback($filter), $match->args, true);
             if (!is_null($response)) {
                 return $response;
             }
@@ -360,19 +360,19 @@ class Router
             return call_user_func_array($cb, $args);
         }
 
-        if ($filter) {
-            if (!isset($this->filters[$cb])) {
-                throw new Exception("Undefined filter '{$cb}'");
-            }
+        throw new Exception('Invalid callback');
+    }
 
-            if (is_array($this->filters[$cb]) && count($this->filters[$cb]) == 2) {
-                $this->filters[$cb] = $this->resolveCallback($this->filters[$cb]);
-            }
 
-            return call_user_func_array($this->filters[$cb], $args);
+    protected function getFilterCallback($cb)
+    {
+        if (!isset($this->filters[$cb])) {
+            throw new Exception("Undefined filter '{$cb}'");
         }
 
-        throw new Exception('Invalid callback');
+        return is_array($this->filters[$cb]) && count($this->filters[$cb]) == 2
+            ? $this->resolveCallback($this->filters[$cb])
+            : $this->filters[$cb];
     }
 
 

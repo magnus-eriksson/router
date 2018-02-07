@@ -4,7 +4,6 @@
  */
 class RouterTest extends PHPUnit_Framework_TestCase
 {
-
     public $router;
 
 
@@ -13,6 +12,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $this->router = new Maer\Router\Router();
 
         $this->addRoutes();
+        $this->addFilters();
     }
 
     public function addRoutes()
@@ -40,6 +40,30 @@ class RouterTest extends PHPUnit_Framework_TestCase
             return $param;
         });
 
+        $this->router->group(['before' => 'filter_fail'], function ($router) {
+            $router->get('/filter/fail', function () {
+                return 'hello world';
+            });
+        });
+
+        $this->router->group(['before' => 'filter_success'], function ($router) {
+            $router->get('/filter/success', function () {
+                return 'hello world';
+            });
+        });
+
+        $this->router->group(['before' => 'filter_class_fail'], function ($router) {
+            $router->get('/filter/class/fail', function () {
+                return 'hello world';
+            });
+        });
+
+        $this->router->group(['before' => 'filter_class_success'], function ($router) {
+            $router->get('/filter/class/success', function () {
+                return 'hello world';
+            });
+        });
+
         $this->router->group(['prefix' => '/(:any)'], function ($router) {
             $router->group(['prefix' => '/(:any)'], function ($router) {
                 $router->get('/', function ($param1, $param2) {
@@ -47,6 +71,23 @@ class RouterTest extends PHPUnit_Framework_TestCase
                 }, ['name' => 'nested_params']);
             });
         });
+    }
+
+    public function addFilters()
+    {
+        // Add the filters
+        $this->router->filter('filter_fail', function () {
+            return 'fail';
+        });
+
+        $this->router->filter('filter_success', function () {
+            return null;
+        });
+
+        $this->router->filter('filter_class_fail', 'Controller@filterFail');
+
+        $this->router->filter('filter_class_success', 'Controller@filterSuccess');
+
     }
 
     public function testGetRoute()
@@ -99,6 +140,21 @@ class RouterTest extends PHPUnit_Framework_TestCase
 
         $response = $this->router->dispatch('GET', '/hello/world');
         $this->assertEquals("hello:world", $response, "Test nested_params");
+    }
+
+    public function testFilters()
+    {
+        $response = $this->router->dispatch('GET', '/filter/fail');
+        $this->assertEquals("fail", $response, 'Test filter fail');
+
+        $response = $this->router->dispatch('GET', '/filter/success');
+        $this->assertEquals("hello world", $response, 'Test filter success');
+
+        $response = $this->router->dispatch('GET', '/filter/class/fail');
+        $this->assertEquals("fail", $response, 'Test filter fail');
+
+        $response = $this->router->dispatch('GET', '/filter/class/success');
+        $this->assertEquals("hello world", $response, 'Test filter success');
     }
 
     /**
@@ -214,5 +270,15 @@ class Controller
     public function fooCallback()
     {
         return 'foo';
+    }
+
+    public function filterFail()
+    {
+        return 'fail';
+    }
+
+    public function filterSuccess()
+    {
+        return null;
     }
 }
