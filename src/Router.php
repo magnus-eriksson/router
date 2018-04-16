@@ -18,6 +18,15 @@ class Router
     protected $callbacks = [];
     protected $routes    = [];
     protected $names     = [];
+
+    protected $patterns  = [
+        'all'      => '.*',
+        'alphanum' => '[a-zA-Z0-9]+',
+        'alpha'    => '[a-zA-Z]+',
+        'num'      => '[\-]?[\d\,\.]+',
+        'any'      => '[^\/]+',
+    ];
+
     protected $notFound;
     protected $methodNotAllowed;
     protected $resolver;
@@ -272,6 +281,26 @@ class Router
         return $routeResponse;
     }
 
+    /**
+     * Get registered patterns
+     *
+     * @return array
+     */
+    public function getPatterns()
+    {
+        return $this->patterns;
+    }
+
+    /**
+     * Add regex pattern
+     *
+     * @param string $name
+     * @param string $pattern
+     */
+    public function addPattern($name, $pattern)
+    {
+        $this->patterns[$name] = $pattern;
+    }
 
     /**
      * Get the requested HTTP method
@@ -500,13 +529,22 @@ class Router
      */
     protected function regexifyPattern($pattern)
     {
-        $pattern = str_replace('/(', "(/", $pattern);
-
-        $from = ['\:all\\', '\:alphanum\\', '\:alpha\\', '\:num\\', '\:any\\', '\?', '\(', '\)'];
-        $to   = ['.*', '[a-zA-Z0-9]+', '[a-zA-Z]+', '[\-]?[\d\,\.]+', '[^\/]+', '?', '(', ')'];
+        preg_match_all('/(\/?)\(:([^)]*)\)(\??)/', $pattern, $regExPatterns, PREG_SET_ORDER, 0);
 
         $pattern = preg_quote($pattern, '/');
-        $pattern = str_replace($from, $to, $pattern);
+
+        foreach ($regExPatterns as $regExPattern) {
+            if (!empty($regExPattern[2]) && key_exists($regExPattern[2], $this->patterns)) {
+                $replacement = sprintf(
+                    '(%s%s)%s',
+                    empty($regExPattern[1]) ? '' : '\/',
+                    $this->patterns[$regExPattern[2]],
+                    $regExPattern[3]
+                );
+
+                $pattern     = str_replace(preg_quote($regExPattern[0], '/'), $replacement, $pattern);
+            }
+        }
 
         return "/^$pattern$/";
     }

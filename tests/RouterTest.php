@@ -17,6 +17,8 @@ class RouterTest extends PHPUnit_Framework_TestCase
 
     public function addRoutes()
     {
+        $this->router->addPattern('date', '\d{4}-\d{2}-\d{2}');
+
         $this->router->get(['/', 'home'], function () {
             return 'home route';
         });
@@ -37,6 +39,10 @@ class RouterTest extends PHPUnit_Framework_TestCase
         });
 
         $this->router->get('/all/(:all)', function ($param) {
+            return $param;
+        });
+
+        $this->router->get('/regex/(:date)', function ($param) {
             return $param;
         });
 
@@ -137,6 +143,9 @@ class RouterTest extends PHPUnit_Framework_TestCase
 
         $response = $this->router->dispatch('GET', '/all/hello/world');
         $this->assertEquals("hello/world", $response, "Test :all");
+
+        $response = $this->router->dispatch('GET', '/regex/' . date('Y-m-d'));
+        $this->assertEquals(date('Y-m-d'), $response, "Test regex param");
 
         $response = $this->router->dispatch('GET', '/hello/world');
         $this->assertEquals("hello:world", $response, "Test nested_params");
