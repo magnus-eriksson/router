@@ -19,6 +19,7 @@ A small, simple, extendable one-file PHP router with groups, filters and named r
 * [Named routes](#named-routes)
 * [Grouping routes](#grouping-routes)
     * [Group prefix](#group-prefix)
+* [Crud routes](#crud-routes)
 * [Dispatch the router](#dispatch-the-router)
     * [Not found](#not-found)
     * [Method not allowed](#method-not-allowed)
@@ -238,6 +239,44 @@ $r->group(['prefix' => '/admin'], function() {
 
 You can mix `before`, `after` and `prefix` when creating groups.
 
+## CRUD routes
+
+To simplify the creation of CRUD routes, there's a `crud()`-function.
+
+```php
+$r->crud('/posts', 'PostsController', [
+    'name' => 'posts',
+]);
+```
+
+The above is the same as if you would define the following routes:
+
+```php
+$r->get('/posts', 'PostsController@many', [
+    'name' => 'posts.many'
+]);
+
+$r->get('/posts/(:any)', 'PostsController@one', [
+    'name' => 'posts.one'
+]);
+
+$r->post('/posts', 'PostsController@create', [
+    'name' => 'posts.create'
+]);
+
+$r->put('/posts/(:any)', 'PostsController@update', [
+    'name' => 'posts.update'
+]);
+
+$r->delete('/posts/(:any)', 'PostsController@delete', [
+    'name' => 'posts.delete'
+]);
+
+```
+
+You can of course use the `crud()` function inside a group as well.
+
+
 ## Dispatch the router
 
 To dispatch the router, it's usually enough to just call the `$r->dispatch()`-method. How ever, if you want to dispatch the router with some specific URL and method you can pass them to the dispatcher (this is useful if you're writing tests):
@@ -311,6 +350,14 @@ $r->resolver(function($callback) use($container) {
     ];
 });
 ```
+---
+## Release notes
+
+#### 1.4.0
+
+* Added [crud()](#crud-routes)-method.
+
+
 ---
 If you have any questions, suggestions or issues, let me know!
 

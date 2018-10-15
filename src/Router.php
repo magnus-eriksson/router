@@ -110,6 +110,45 @@ class Router
 
 
     /**
+     * Add crud routes for a controller
+     *
+     * @param  string $pattern
+     * @param  string $callback
+     * @param  array  $params
+     *
+     * @return $this
+     */
+    public function crud($pattern, $callback, array $params = [])
+    {
+        if (!is_string($callback)) {
+            throw new \Exception('Crud callbacks must be a string to a controller class');
+        }
+
+        if (!empty($params['name'])) {
+            $name = $params['name'];
+        }
+
+        $pattern  = rtrim($pattern, '/');
+        $params['name'] = $name ? $name . '.create' : null;
+        $this->post("{$pattern}", "{$callback}@create", $params);
+
+        $params['name'] = $name ? $name . '.one' : null;
+        $this->get("{$pattern}/(:any)", "{$callback}@one", $params);
+
+        $params['name'] = $name ? $name . '.many' : null;
+        $this->get("{$pattern}", "{$callback}@many", $params);
+
+        $params['name'] = $name ? $name . '.update' : null;
+        $this->put("{$pattern}/(:any)", "{$callback}@update", $params);
+
+        $params['name'] = $name ? $name . '.delete' : null;
+        $this->delete("{$pattern}/(:any)", "{$callback}@delete", $params);
+
+        return $this;
+    }
+
+
+    /**
      * Create a new route group
      *
      * @param  array $params
