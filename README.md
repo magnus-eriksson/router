@@ -24,8 +24,7 @@ A small, simple, extendable one-file PHP router with groups, filters and named r
     * [Not found](#not-found)
     * [Method not allowed](#method-not-allowed)
 * [Adding a custom callback resolver](#adding-a-custom-callback-resolver)
-
-
+* [Release notes](#release-notes)
 
 
 
