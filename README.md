@@ -20,6 +20,7 @@ A small, simple, extendable one-file PHP router with groups, filters and named r
 * [Grouping routes](#grouping-routes)
     * [Group prefix](#group-prefix)
 * [Crud routes](#crud-routes)
+* [Redirects](#redirects)
 * [Dispatch the router](#dispatch-the-router)
     * [Not found](#not-found)
     * [Method not allowed](#method-not-allowed)
@@ -274,6 +275,56 @@ $r->delete('/posts/(:any)', 'PostsController@delete', [
 ```
 
 You can of course use the `crud()` function inside a group as well.
+
+## Redirects
+
+You can register the router to redirect certain URL's as well.
+
+_Note:_ All redirect routes are triggered before any other registered routes.
+
+Register a redirect:
+
+```php
+// A simple redirect
+$r->redirect('/from/path', '/to/path');
+
+// It works with absolute targets as well
+$r->redirect('/foo', 'https://example.com');
+
+// You can also register a named route as target
+$r->redirect('/foo', null, [
+    'route' => ['someRouteName'],
+    // Add route arguments, if needed
+    'params'  => ['argument1', 'argument2', ...]
+]);
+
+// If you want to redirect using another http code than 307 (default)
+$r->redirect('/foo', '/bar', [
+    'code' => 301
+]);
+```
+
+You can also register `before`-filters on a redirect.
+
+### Redirect current request to a named route
+
+When you register i redirect using the above method, it will be handled on dispatch, just like any other route.
+
+Sometimes you want to redirect the user straight away, maybe after the router already has been dispatched (or even before). You can use `toRoute()` for that:
+
+```php
+// Make a redirect to a named route
+$r->toRoute('someRouteName', [
+    'argument1',
+    'argument2',
+    ...
+]);
+
+// With another http code than 307 (default)
+$r->toRoute('someRouteName', [], 301);
+```
+
+The above will redirect the request immediately. It's just like doing `header('location: ...')`.
 
 
 ## Dispatch the router

@@ -18,6 +18,7 @@ class Router
     protected $callbacks = [];
     protected $routes    = [];
     protected $names     = [];
+    protected $redirects = [];
 
     protected $patterns  = [
         'all'      => '.*',
@@ -45,7 +46,7 @@ class Router
     public function __call($method, $args)
     {
         $method = strtoupper($method);
-        $verbs  = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS', 'CONNECT', 'TRACE', 'ANY'];
+        $verbs  = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS', 'CONNECT', 'TRACE', 'ANY', 'REDIRECT'];
 
         if (!in_array($method, $verbs)) {
             throw new Exception("Call to undefined method '{$method}'");
@@ -56,6 +57,7 @@ class Router
                 if (!isset($args[2]) || !is_array($args[2])) {
                     $args[2] = [];
                 }
+
                 $args[2]['name'] = $args[0][1];
             }
 
@@ -106,6 +108,51 @@ class Router
         ]);
 
         return $this;
+    }
+
+
+    /**
+     * Add a redirect
+     *
+     * @param  string  $from
+     * @param  string  $to
+     * @param  array   $params
+     *
+     * @return $this
+     */
+    public function redirect($from, $to, array $params = [])
+    {
+        $this->add('REDIRECT', $from, function () use ($to, $params) {
+            $code = $params['code'] ?? 307;
+
+            if (!empty($params['route'])) {
+                $args = $params['args'] ?? [];
+                $to   = $this->getRoute($params['route'], is_array($args) ? $args : []);
+            }
+
+            header('location: ' . $to, true, $code);
+            exit;
+        }, $params);
+
+        return $this;
+    }
+
+
+    /**
+     * Redirect to a route
+     *
+     * @param  string  $name
+     * @param  array   $args
+     * @param  int     $code
+     *
+     * @return $this
+     */
+    public function toRoute($name, array $args = [], $code = 307)
+    {
+        $to = $this->getRoute($name, $args);
+
+        header("location: {$to}", true, $code);
+        exit;
     }
 
 
@@ -599,7 +646,7 @@ class Router
      */
     protected function getRouteObject($pattern, $method)
     {
-        foreach ([$method, 'ANY'] as $verb) {
+        foreach (['REDIRECT', $method, 'ANY'] as $verb) {
             if (array_key_exists($verb, $this->routes[$pattern])) {
                 $index = $this->routes[$pattern][$verb];
                 return $this->callbacks[$index];
