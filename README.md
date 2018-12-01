@@ -21,6 +21,7 @@ A small, simple, extendable one-file PHP router with groups, filters and named r
     * [Group prefix](#group-prefix)
 * [Crud routes](#crud-routes)
 * [Redirects](#redirects)
+    * [Redirect current request to a named route](#redirect-current-request-to-a-named-route)
 * [Dispatch the router](#dispatch-the-router)
     * [Not found](#not-found)
     * [Method not allowed](#method-not-allowed)
@@ -402,6 +403,10 @@ $r->resolver(function($callback) use($container) {
 ```
 ---
 ## Release notes
+
+#### 1.5.0
+* Added redirect-method [redirect()](#redirects)
+* Added redirect-method [toRoute()](#redirect-current-request-to-a-named-route)
 
 #### 1.4.0
 
