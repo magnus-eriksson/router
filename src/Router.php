@@ -123,10 +123,15 @@ class Router
     public function redirect($from, $to, array $params = [])
     {
         $this->add('REDIRECT', $from, function () use ($to, $params) {
-            $code = $params['code'] ?? 307;
+            $code = !empty($params['code'])
+                ? $params['code']
+                : 307;
 
             if (!empty($params['route'])) {
-                $args = $params['args'] ?? [];
+                $args = !empty($params['args'])
+                    ? $params['args']
+                    : [];
+
                 $to   = $this->getRoute($params['route'], is_array($args) ? $args : []);
             }
 
