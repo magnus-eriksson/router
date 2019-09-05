@@ -166,6 +166,31 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $this->assertEquals("hello world", $response, 'Test filter success');
     }
 
+    public function testPrependBaseUrl()
+    {
+        $this->assertEquals('/test', $this->router->getRoute('test'));
+        $this->assertEquals('/test', $this->router->getRoute('test'), true);
+
+        // Add a base URL
+        $this->router->baseUrl('http://foo.com');
+
+        $this->assertEquals('/test', $this->router->getRoute('test'));
+        $this->assertEquals('http://foo.com/test', $this->router->getRoute('test', [], true));
+
+        // Prepend it as default
+        $this->router->alwaysPrependBaseUrl(true);
+
+        $this->assertEquals('http://foo.com/test', $this->router->getRoute('test'));
+        $this->assertEquals('/test', $this->router->getRoute('test', [], false));
+
+        // Change so it shouldn't prepend automatically
+        $this->router->alwaysPrependBaseUrl(false);
+
+        $this->assertEquals('/test', $this->router->getRoute('test'));
+        $this->assertEquals('http://foo.com/test', $this->router->getRoute('test', [], true));
+
+    }
+
     /**
      * @expectedException Maer\Router\NotFoundException
      */

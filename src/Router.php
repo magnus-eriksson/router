@@ -19,6 +19,8 @@ class Router
     protected $routes    = [];
     protected $names     = [];
     protected $redirects = [];
+    protected $baseUrl   = null;
+    protected $alwaysPrependBaseUrl = false;
 
     protected $patterns  = [
         'all'      => '.*',
@@ -195,6 +197,35 @@ class Router
 
         $params['name'] = $name ? $name . '.delete' : null;
         $this->delete("{$pattern}/(:any)", "{$callback}@delete", $params);
+
+        return $this;
+    }
+
+    /**
+     * Set the base url to be prepended on the getRoute-response
+     *
+     * @param string $baseUrl
+     *
+     * @return $this
+     */
+    public function baseUrl($baseUrl)
+    {
+        $this->baseUrl = rtrim($baseUrl, '/');
+
+        return $this;
+    }
+
+
+    /**
+     * Set if getRoute always should be prepend the base url on the response
+     *
+     * @param bool   $state
+     *
+     * @return $this
+     */
+    public function alwaysPrependBaseUrl($state)
+    {
+        $this->alwaysPrependBaseUrl = (bool)$state;
 
         return $this;
     }
@@ -541,13 +572,20 @@ class Router
      *
      * @param  string $name
      * @param  array  $args
+     * @param  bool   $prependBaseUrl
      *
      * @return string
      *
      * @throws Exception If there aren't enough arguments for all required parameters
      */
-    public function getRoute($name, array $args = [])
+    public function getRoute($name, array $args = [], $prependBaseUrl = null)
     {
+        $prependBase = $this->alwaysPrependBaseUrl;
+
+        if ($prependBaseUrl !== null) {
+            $prependBase = (bool)$prependBaseUrl;
+        }
+
         if (!isset($this->names[$name])) {
             return null;
         }
@@ -592,7 +630,13 @@ class Router
             $url[] = $frag;
         }
 
-        return '/' . implode('/', $url);
+        $prefix = '/';
+
+        if ($prependBase) {
+            $prefix = $this->baseUrl . $prefix;
+        }
+
+        return $prefix . implode('/', $url);
     }
 
 

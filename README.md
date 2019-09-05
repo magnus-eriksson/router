@@ -17,6 +17,7 @@ A small, simple, extendable one-file PHP router with groups, filters and named r
 * [Route callbacks](#route-callbacks)
 * [Filters](#filters)
 * [Named routes](#named-routes)
+*   * [Prepend base url](#prepend-base-url)
 * [Grouping routes](#grouping-routes)
     * [Group prefix](#group-prefix)
 * [Crud routes](#crud-routes)
@@ -197,6 +198,31 @@ echo $r->getRoute('some-page', ['first', 'second']);
 ```
 
 If you don't pass enough arguments to cover all required parameters, an exception will be thrown.
+
+### Prepend base url
+
+By default, the router returns paths without the base url (protocol + hostname)
+
+However, if you want the response from `getRoute()` to include the base url, you need to set the base url:
+
+```php
+$r->baseUrl('http://foo.bar');
+```
+
+When you now want to get a named route, you can pass a boolean as third argument. `true` = include base url and `false` won't.
+
+```php
+$r->getRoute('some-page', [], true);
+// Returns: http://foo.bar/something
+```
+
+If you don't want to pass a third argument, but rather have it returning the base url as default, you can set that using:
+
+```php
+$r->alwaysPrependBaseUrl(true);
+```
+
+If you call `getRoute()` without the third argument, it will always prepend the base url unless you pass `false` as third argument to `getRoute()`.
 
 ## Grouping routes
 
