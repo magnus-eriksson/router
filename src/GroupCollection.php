@@ -38,7 +38,7 @@ class GroupCollection
      */
     public function push(Group $group)
     {
-        $this->groups[] = $group;
+        //$this->groups[] = $group;
     }
 
 
