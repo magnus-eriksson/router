@@ -25,7 +25,7 @@
     },
     "scripts": {
         "cs": "./vendor/bin/phpcs --standard=PSR2 --extensions=php --ignore=vendor/,tests/ -n -s ./",
-        "phpunit": "./vendor/bin/phpunit --strict-coverage --colors=always",
+        "phpunit": "./vendor/bin/phpunit --strict-coverage --colors=always  --testdox",
         "test": [
             "@cs",
             "@phpunit"

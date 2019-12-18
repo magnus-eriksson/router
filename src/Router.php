@@ -590,53 +590,50 @@ class Router
             return null;
         }
 
-        $route = $this->callbacks[$this->names[$name]];
+        $route     = $this->callbacks[$this->names[$name]];
+        $urlString = $route->pattern;
 
-        if (strpos($route->pattern, '(') === false) {
-            // If we don't have any route parameters, just return the pattern
-            // straight off. No need for any regex stuff.
-            return $route->pattern;
-        }
+        if (strpos($route->pattern, '(') !== false) {
+            // Convert all placeholders to %o = optional and %r = required
+            $from    = ['/(\([^\/]+[\)]+[\?])/', '/(\([^\/]+\))/'];
+            $to      = ['%o', '%r'];
+            $pattern = preg_replace($from, $to, $route->pattern);
 
-        // Convert all placeholders to %o = optional and %r = required
-        $from    = ['/(\([^\/]+[\)]+[\?])/', '/(\([^\/]+\))/'];
-        $to      = ['%o', '%r'];
-        $pattern = preg_replace($from, $to, $route->pattern);
+            $frags = explode('/', trim($pattern, '/'));
+            $url   = [];
 
-        $frags = explode('/', trim($pattern, '/'));
-        $url   = [];
-
-        // Loop thru the pattern fragments and insert the arguments
-        foreach ($frags as $frag) {
-            if ($frag == '%r') {
-                if (!$args) {
-                    // A required parameter, but no more arguments.
-                    throw new Exception('Missing route parameters');
-                }
-                $url[] = array_shift($args);
-                continue;
-            }
-
-            if ($frag == "%o") {
-                if (!$args) {
-                    // No argument for the optional parameter,
-                    // just continue the iteration.
+            // Loop thru the pattern fragments and insert the arguments
+            foreach ($frags as $frag) {
+                if ($frag == '%r') {
+                    if (!$args) {
+                        // A required parameter, but no more arguments.
+                        throw new Exception('Missing route parameters');
+                    }
+                    $url[] = array_shift($args);
                     continue;
                 }
-                $url[] = array_shift($args);
-                continue;
+
+                if ($frag == "%o") {
+                    if (!$args) {
+                        // No argument for the optional parameter,
+                        // just continue the iteration.
+                        continue;
+                    }
+                    $url[] = array_shift($args);
+                    continue;
+                }
+
+                $url[] = $frag;
             }
 
-            $url[] = $frag;
+            $urlString = '/' . implode('/', $url);
         }
-
-        $prefix = '/';
 
         if ($prependBase) {
-            $prefix = $this->baseUrl . $prefix;
+            $urlString = $this->baseUrl . $urlString;
         }
 
-        return $prefix . implode('/', $url);
+        return $urlString;
     }
 
 

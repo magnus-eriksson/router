@@ -36,7 +36,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
 
         $this->router->get(['/last', 'last'], function () {
             return 'last route';
-        });
+        }, ['name' => 'last']);
 
         $this->router->get('/all/(:all)', function ($param) {
             return $param;
@@ -176,6 +176,9 @@ class RouterTest extends PHPUnit_Framework_TestCase
 
         $this->assertEquals('/test', $this->router->getRoute('test'));
         $this->assertEquals('http://foo.com/test', $this->router->getRoute('test', [], true));
+
+        $this->assertEquals('/last', $this->router->getRoute('last'));
+        $this->assertEquals('http://foo.com/last', $this->router->getRoute('last', [], true));
 
         // Prepend it as default
         $this->router->alwaysPrependBaseUrl(true);
