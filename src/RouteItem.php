@@ -30,13 +30,6 @@ class RouteItem
     protected $before = [];
 
     /**
-     * After filters
-     *
-     * @var array
-     */
-    protected $after = [];
-
-    /**
      * Injected route arguments when route is a match
      *
      * @var array
@@ -60,7 +53,6 @@ class RouteItem
         // Extra settings
         $this->name   = $settings['name'] ?? null;
         $this->before = $settings['before'] ?? [];
-        $this->after  = $settings['after'] ?? [];
     }
 
 
@@ -116,17 +108,6 @@ class RouteItem
     public function getBeforeFilters(): array
     {
         return $this->before;
-    }
-
-
-    /**
-     * Get the after filters
-     *
-     * @return array
-     */
-    public function getAfterFilters(): array
-    {
-        return $this->after;
     }
 
 

@@ -5,7 +5,7 @@ use Maer\Router\Router;
 /**
  * @coversDefaultClass \Maer\Router\Router
  */
-class RouterCreateAndDispatchTest extends TestCase
+class CreateAndDispatchTest extends TestCase
 {
 
     /**

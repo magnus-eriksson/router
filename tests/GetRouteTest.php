@@ -5,7 +5,7 @@ use Maer\Router\Router;
 /**
  * @coversDefaultClass \Maer\Router\Router
  */
-class RouterGetRouteTest extends TestCase
+class GetRouteTest extends TestCase
 {
     /**
      * Get named routes without any parameters

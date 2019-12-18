@@ -12,22 +12,16 @@ class Group
      */
     protected $before = [];
 
-    /**
-     * @var array
-     */
-    protected $after = [];
-
 
     /**
      * @param string|null $prefix
      * @param array       $before
      * @param array       $after
      */
-    public function __construct(?string $prefix = null, array $before = [], array $after = [])
+    public function __construct(?string $prefix = null, array $before = [])
     {
         $this->prefix = $prefix;
         $this->before = $before;
-        $this->after  = $after;
     }
 
 
@@ -50,16 +44,5 @@ class Group
     public function getBeforeFilters(): array
     {
         return $this->before;
-    }
-
-
-    /**
-     * Get the after filters
-     *
-     * @return array
-     */
-    public function getAfterFilters()
-    {
-        return $this->after;
     }
 }

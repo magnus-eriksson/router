@@ -5,7 +5,7 @@ use Maer\Router\Router;
 /**
  * @coversDefaultClass \Maer\Router\Router
  */
-class RouterNotFoundOrMethodNotAllowedTest extends TestCase
+class NotFoundOrMethodNotAllowedTest extends TestCase
 {
     /**
      * Test setting custom 404

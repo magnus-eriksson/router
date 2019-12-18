@@ -21,13 +21,6 @@ class GroupCollection
      */
     protected $before = [];
 
-    /**
-     * After filter for all current groups
-     *
-     * @var array
-     */
-    protected $after  = [];
-
 
     /**
      * Add a group
@@ -38,7 +31,7 @@ class GroupCollection
      */
     public function push(Group $group)
     {
-        //$this->groups[] = $group;
+        $this->groups[] = $group;
     }
 
 
@@ -50,7 +43,7 @@ class GroupCollection
     public function pop()
     {
         if ($this->groups) {
-            $this->groups = array_pop($this->groups);
+            array_pop($this->groups);
         }
     }
 
@@ -74,11 +67,8 @@ class GroupCollection
             $pattern = trim($prefix . '/' . ltrim($pattern, '/'), '/');
         }
 
-        // Filters
-        foreach (['before', 'after'] as $type) {
-            if ($this->{$type}) {
-                $settings[$type] = array_merge($this->{$type}, $settings[$type]);
-            }
+        if ($this->before) {
+            $settings['before'] = array_merge($this->before, $settings['before']);
         }
 
         return [$pattern, $settings];
@@ -94,7 +84,6 @@ class GroupCollection
     {
         $this->prefixes = [];
         $this->before   = [];
-        $this->after    = [];
 
         foreach ($this->groups as $group) {
             if ($group->getPrefix()) {
@@ -103,10 +92,6 @@ class GroupCollection
 
             if ($group->getBeforeFilters()) {
                 $this->before = array_merge($this->before, $group->getBeforeFilters());
-            }
-
-            if ($group->getAfterFilters()) {
-                $this->after = array_merge($this->after, $group->getAfterFilters());
             }
         }
     }

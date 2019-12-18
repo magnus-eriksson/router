@@ -50,6 +50,13 @@ class Router implements RouterInterface
      */
     protected $resolver;
 
+    /**
+     * The last matched route
+     *
+     * @var null|RouteInfo
+     */
+    protected $lastMatchedRoute;
+
 
     /**
      * @param array $config
@@ -177,7 +184,6 @@ class Router implements RouterInterface
         $pattern  = $pattern ?: '/';
 
         $settings['before'] = $this->normalizeFilters($settings['before'] ?? []);
-        $settings['after']  = $this->normalizeFilters($settings['after'] ?? []);
 
         [$pattern, $settings] = $this->groups->decorate($pattern, $settings);
 
@@ -199,7 +205,6 @@ class Router implements RouterInterface
     {
         $prefix = null;
         $before = [];
-        $after  = [];
 
         if (isset($groupInfo['prefix']) && $groupInfo['prefix'] !== '') {
             $prefix = $this->normalizePath($groupInfo['prefix']);
@@ -209,11 +214,7 @@ class Router implements RouterInterface
             $before = $this->normalizeFilters($groupInfo['before']);
         }
 
-        if (isset($groupInfo['after']) && $groupInfo['after']) {
-            $after = $this->normalizeFilters($groupInfo['after']);
-        }
-
-        $this->groups->push(new Group($prefix, $before, $after));
+        $this->groups->push(new Group($prefix, $before));
 
         call_user_func_array($routes, [$this]);
 
@@ -355,6 +356,17 @@ class Router implements RouterInterface
 
 
     /**
+     * Get the last matched route
+     *
+     * @return RouteItem|null
+     */
+    public function getLastMatchedRoute(): ?RouteItem
+    {
+        return $this->lastMatchedRoute;
+    }
+
+
+    /**
      * Dispatch the router
      *
      * @param  string $method
@@ -381,6 +393,22 @@ class Router implements RouterInterface
             return $this->triggerNotFound();
         } catch (MethodNotAllowedException $e) {
             return $this->triggerMethodNotAllowed();
+        }
+
+        // Save the route
+        $this->lastMatchedRoute = $route;
+
+        // Execute the before filters
+        foreach ($route->getBeforeFilters() as $filter) {
+            if (!$filterCallback = $this->filters->get($filter)) {
+                throw new Exception("The route filter '{$filter}' was not found");
+            }
+
+            $filterResponse = $this->exec($filterCallback, [$route]);
+
+            if ($filterResponse !== null) {
+                return $filterResponse;
+            }
         }
 
         return $this->exec($route->getCallback(), $route->getCallbackArguments());

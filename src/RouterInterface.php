@@ -168,6 +168,22 @@ interface RouterInterface
 
 
     /**
+     * Trigger the "not found" (404) error
+     *
+     * @return mixed
+     */
+    public function triggerNotFound();
+
+
+    /**
+     * Trigger the "method not allowed" (405) error
+     *
+     * @return mixed
+     */
+    public function triggerMethodNotAllowed();
+
+
+    /**
      * Dispatch the router
      *
      * @param  string $method
@@ -211,4 +227,12 @@ interface RouterInterface
      * @throws Exception If there aren't enough arguments for all required parameters
      */
     public function getRoute(string $name, array $args = [], bool $useBaseUrl = false): ?string;
+
+
+    /**
+     * Get the last matched route
+     *
+     * @return RouteItem|null
+     */
+    public function getLastMatchedRoute(): ?RouteItem;
 }
